@@ -16,8 +16,10 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include  # Importamos `include`
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("admin/", admin.site.urls),  # Panel de administración
+    path("reservas/", include("reservations.urls")),  # Incluimos las URLs de reservations
 ]
+

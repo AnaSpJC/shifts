@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Mis Reservas</h2>
+
+{% if reservas %}
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Estado</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reserva in reservas %}
+            <tr>
+                <td>{{ reserva.date }}</td>
+                <td>{{ reserva.time }}</td>
+                <td>{% if reserva.is_confirmed %} Confirmado {% else %} Pendiente {% endif %}</td>
+                <td>
+                    {% if not reserva.is_confirmed %}
+                        <form action="{% url 'confirm_reservation' reserva.id %}" method="POST">
+                            {% csrf_token %}
+                            <button type="submit">Confirmar</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No tienes reservas aún.</p>
+{% endif %}
+
+<!-- Contenedor del calendario -->
+<div id="calendar-container">
+    <div id="calendar"></div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let calendarEl = document.getElementById("calendar");
+
+    let calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth",
+        selectable: true,
+        locale: "es",
+        events: "/reservas/eventos/",
+        dateClick: function(info) {
+            alert("Fecha seleccionada: " + info.dateStr);
+        }
+    });
+
+    calendar.render();
+});
+</script>
+{% endblock %}
+{% block styles %}
+<style>
+    #calendar-container {
+        max-width: 800px; /* Limita el ancho del calendario */
+        margin: auto; /* Centrar el calendario */
+        padding: 10px;
+        border: 1px solid #ddd; /* Opcional: agregar un borde */
+        background: #f8f9fa; /* Color de fondo suave */
+    }
+    #calendar {
+        height: 450px; /* Ajusta la altura */
+        max-width: 100%; /* Hace que se adapte al contenedor */
+    }
+</style>
+{% endblock %}
+

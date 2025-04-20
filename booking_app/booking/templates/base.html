@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Mi Aplicación{% endblock %}</title>
+    <!-- FullCalendar -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
+    {% block scripts %}{% endblock %}
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/main.min.css" rel="stylesheet">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <header>
+        <h1>Gestión de Turnos</h1>
+    </header>
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+    
+</body>
+</html>
