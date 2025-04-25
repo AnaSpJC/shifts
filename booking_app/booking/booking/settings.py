@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-w#c@c*ozoih+y400wzc=7((vm-17_+jd@8s2#_duu=9z&$*&p_
 DEBUG = True
 
 ALLOWED_HOSTS = []
-CSRF_TRUSTED_ORIGINS = ['https://localhost:8000']
+CSRF_TRUSTED_ORIGINS = ['https://localhost:8000', 'http://localhost:8000']
 
 # Application definition
 
@@ -103,9 +103,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "es"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "America/Argentina/Buenos_Aires"
+
 
 USE_I18N = True
 
@@ -116,6 +117,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/reservas/mis-reservas/"
+
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

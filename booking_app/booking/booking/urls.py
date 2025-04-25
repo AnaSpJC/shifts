@@ -17,8 +17,10 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include  # Importamos `include`
+from django.contrib.auth import views as auth_views  # Importamos las vistas de autenticación
 
 urlpatterns = [
+    path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
     path("admin/", admin.site.urls),  # Panel de administración
     path("reservas/", include("reservations.urls")),  # Incluimos las URLs de reservations
 ]

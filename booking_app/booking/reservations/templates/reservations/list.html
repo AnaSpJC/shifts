@@ -45,22 +45,54 @@
 
 {% block scripts %}
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    let calendarEl = document.getElementById("calendar");
-
-    let calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: "dayGridMonth",
-        selectable: true,
-        locale: "es",
-        events: "/reservas/eventos/",
-        dateClick: function(info) {
-            alert("Fecha seleccionada: " + info.dateStr);
-        }
+    document.addEventListener("DOMContentLoaded", function(){
+        let calendarEl = document.getElementById("calendar");
+    
+        let calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: "dayGridMonth",
+            selectable: true,
+            locale: "es",
+            events: "/reservas/eventos/",  // Carga los turnos ocupados desde Django
+            dateClick: function(info) {  // Capturar selección de fecha
+                if (confirm("¿Quieres reservar el día " + info.dateStr + "?")) {
+                    fetch("/reservas/agregar/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": getCSRFToken()
+                        },
+                        body: JSON.stringify({ date: info.dateStr })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message) {
+                            alert("Reserva creada con éxito.");
+                            calendar.refetchEvents(); // Recargar eventos en el calendario
+                        } else {
+                            alert("Error: " + data.error);
+                        }
+                    })
+                    .catch(error => console.error("Error:", error));
+                }
+            }
+        });
+    
+        calendar.render();
     });
+    
+    // Función para obtener el token CSRF en Django
+    function getCSRFToken() {
+    const csrfInput = document.querySelector("[name=csrfmiddlewaretoken]");
+    if (csrfInput) {
+        return csrfInput.value; // Devuelve el valor si existe
+    } else {
+        console.error("CSRF token no encontrado en el DOM.");
+        return null; // Evita que lance un error
+    }
+}
 
-    calendar.render();
-});
-</script>
+    </script>
+    
 {% endblock %}
 {% block styles %}
 <style>
