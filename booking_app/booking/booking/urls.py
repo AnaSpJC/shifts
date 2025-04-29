@@ -23,5 +23,6 @@ urlpatterns = [
     path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
     path("admin/", admin.site.urls),  # Panel de administración
     path("reservas/", include("reservations.urls")),  # Incluimos las URLs de reservations
+    
 ]
 

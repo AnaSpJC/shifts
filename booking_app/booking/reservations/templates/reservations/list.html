@@ -21,7 +21,7 @@
                 <td>{% if reserva.is_confirmed %} Confirmado {% else %} Pendiente {% endif %}</td>
                 <td>
                     {% if not reserva.is_confirmed %}
-                        <form action="{% url 'confirm_reservation' reserva.id %}" method="POST">
+                        <form action="/reservas/confirmar/{{ reserva.id }}/" method="POST">
                             {% csrf_token %}
                             <button type="submit">Confirmar</button>
                         </form>
@@ -39,12 +39,31 @@
 <div id="calendar-container">
     <div id="calendar"></div>
 </div>
-
+<div id="available-slots" style="display: none;">
+    <h3>Horarios disponibles para <span id="selected-date"></span>:</h3>
+    <ul id="slots-list"></ul>
+</div>
 
 {% endblock %}
 
 {% block scripts %}
 <script>
+    // Función para obtener el token CSRF en Django
+    function getCSRFToken() {
+        const csrfMeta = document.querySelector("meta[name='csrf-token']");
+        if (csrfMeta) {
+            return csrfMeta.getAttribute("content");
+        }
+    
+        const csrfInput = document.querySelector("[name=csrfmiddlewaretoken]");
+        if (csrfInput) {
+            return csrfInput.value;
+        }
+    
+        console.error("CSRF token no encontrado en el DOM.");
+        return null; // Evita que lance un error crítico
+    }
+
     document.addEventListener("DOMContentLoaded", function(){
         let calendarEl = document.getElementById("calendar");
     
@@ -52,48 +71,89 @@
             initialView: "dayGridMonth",
             selectable: true,
             locale: "es",
-            events: "/reservas/eventos/",  // Carga los turnos ocupados desde Django
-            dateClick: function(info) {  // Capturar selección de fecha
-                if (confirm("¿Quieres reservar el día " + info.dateStr + "?")) {
-                    fetch("/reservas/agregar/", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-CSRFToken": getCSRFToken()
-                        },
-                        body: JSON.stringify({ date: info.dateStr })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.message) {
-                            alert("Reserva creada con éxito.");
-                            calendar.refetchEvents(); // Recargar eventos en el calendario
-                        } else {
-                            alert("Error: " + data.error);
-                        }
-                    })
-                    .catch(error => console.error("Error:", error));
-                }
+            events: "/reservas/eventos/",
+            dateClick: function(info) {
+                document.getElementById("selected-date").innerText = info.dateStr;
+                fetch("/reservas/horarios-disponibles/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCSRFToken() // Utiliza la función accesible
+                    },
+                    body: JSON.stringify({ date: info.dateStr })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    let slotsList = document.getElementById("slots-list");
+                    slotsList.innerHTML = ""; 
+                    data.forEach(slot => {
+                        let li = document.createElement("li");
+                        li.innerText = slot;
+                        li.addEventListener("click", function() {  // Evento de clic para reservar
+                            if (confirm(`¿Reservar el horario ${slot} para el día ${info.dateStr}?`)) {
+                                fetch("/reservas/agregar/", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "X-CSRFToken": getCSRFToken()
+                                    },
+                                    body: JSON.stringify({ date: info.dateStr, time: slot })
+                                })
+                                .then(response => response.json())
+                                .then(data =>{
+                                    if (data.message) {
+                                        alert("Reserva creada con éxito.");
+                                        calendar.refetchEvents(); // Recargar eventos en el calendario
+    
+                                        // Actualizar automáticamente "Mis Reservas"
+                                        fetch("/reservas/mis-reservas-json/")
+                                            .then(response => response.json())
+                                            .then(reservas => {
+                                                let reservasTable = document.querySelector("table tbody");
+                                                reservasTable.innerHTML = ""; // Limpiar la tabla actual
+                                                reservas.forEach(reserva => {
+                                                    let row = `
+                                                        <tr>
+                                                            <td>${reserva.date}</td>
+                                                            <td>${reserva.time}</td>
+                                                            <td>${reserva.is_confirmed ? "Confirmado" : "Pendiente"}</td>
+                                                            <td>
+                                                                ${reserva.is_confirmed ? "" : `
+                                                                <form action="/reservas/confirmar/${reserva.id}/" method="POST">
+                                                                    <input type="hidden" name="csrfmiddlewaretoken" value="${getCSRFToken()}">
+                                                                    <button type="submit">Confirmar</button>
+                                                                </form>
+                                                                `}
+                                                            </td>
+
+                                                        </tr>
+                                                    `;
+                                                    reservasTable.insertAdjacentHTML("beforeend", row);
+                                                });
+                                            })
+                                            .catch(error => console.error("Error al actualizar la lista de reservas:", error));
+                                    } else {
+                                        alert("Error: " + data.error);
+                                    }
+                                })
+                                .catch(error => console.error("Error:", error));
+                            }
+                        });
+                        slotsList.appendChild(li);
+                    });
+                    document.getElementById("available-slots").style.display = "block";
+                })
+                .catch(error => console.error("Error:", error));
             }
         });
     
         calendar.render();
     });
-    
-    // Función para obtener el token CSRF en Django
-    function getCSRFToken() {
-    const csrfInput = document.querySelector("[name=csrfmiddlewaretoken]");
-    if (csrfInput) {
-        return csrfInput.value; // Devuelve el valor si existe
-    } else {
-        console.error("CSRF token no encontrado en el DOM.");
-        return null; // Evita que lance un error
-    }
-}
+</script>
 
-    </script>
-    
 {% endblock %}
+
+
 {% block styles %}
 <style>
     #calendar-container {
@@ -109,4 +169,3 @@
     }
 </style>
 {% endblock %}
-

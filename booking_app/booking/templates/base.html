@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
     <title>{% block title %}Mi Aplicación{% endblock %}</title>
     <!-- FullCalendar -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
